@@ -1,0 +1,235 @@
+---
+title: "Chronic Pain Phenotype in UK Biobank"
+author: "Hannah Casey"
+date: "2/23/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+
+```
+
+Load in touchscreen questionnaire which contains self-reported chronic pain phenotyping data
+
+```{r Load in raw data}
+UKB_touchscreen<- readRDS("/Volumes/GenScotDepression/data/ukb/phenotypes/fields/2021-04-phenotypes-ukb44797/Touchscreen.rds")
+```
+Subset touchscreen questionnaire data to just chronic pain data:
+
+6159	Pain type(s) experienced in last month
+3799	Headaches for 3+ months
+4067	Facial pains for 3+ months
+3404	Neck/shoulder pain for 3+ months
+3571	Back pain for 3+ months
+3741	Stomach/abdominal pain for 3+ months
+3414	Hip pain for 3+ months
+3773	Knee pain for 3+ months
+2956	General pain for 3+ months
+
+```{r Subset to pain data, echo=FALSE}
+UKB_touchscreen_CP <- cbind(UKB_touchscreen[,1],
+             UKB_touchscreen[grepl("f.6159.*", names(UKB_touchscreen))],
+             UKB_touchscreen[grepl("f.3799*", names(UKB_touchscreen))],
+             UKB_touchscreen[grepl("f.4067*", names(UKB_touchscreen))],
+             UKB_touchscreen[grepl("f.3404*", names(UKB_touchscreen))],
+             UKB_touchscreen[grepl("f.3571*", names(UKB_touchscreen))],
+             UKB_touchscreen[grepl("f.3741*", names(UKB_touchscreen))],
+             UKB_touchscreen[grepl("f.3414*", names(UKB_touchscreen))],
+             UKB_touchscreen[grepl("f.3773*", names(UKB_touchscreen))],
+             UKB_touchscreen[grepl("f.2956*", names(UKB_touchscreen))])
+
+## Remove redundant UKB touchscreen questionaire dataframe
+rm(UKB_touchscreen)
+
+## Rename ID column
+UKB_touchscreen_CP <- UKB_touchscreen_CP %>%
+  dplyr::rename(n_eid = "UKB_touchscreen[, 1]")
+```
+
+
+Create new columns to record if pain is experienced in a specific body site for each participant
+
+
+```{r Indicate site of pain}
+
+UKB_touchscreen_CP$any_pain_headache <- 0
+UKB_touchscreen_CP$any_pain_facial <- 0
+UKB_touchscreen_CP$any_pain_neck_shoulder <- 0
+UKB_touchscreen_CP$any_pain_back <- 0
+UKB_touchscreen_CP$any_pain_stomach_abdominal <- 0
+UKB_touchscreen_CP$any_pain_hip <- 0
+UKB_touchscreen_CP$any_pain_knee <- 0
+UKB_touchscreen_CP$any_pain_widespread <- 0
+
+
+
+UKB_touchscreen_CP$any_pain_headache[which(UKB_touchscreen_CP$f.6159.0.0 == "Headache" | 
+              UKB_touchscreen_CP$f.6159.0.1== "Headache" |
+              UKB_touchscreen_CP$f.6159.0.2== "Headache" |
+              UKB_touchscreen_CP$f.6159.0.3== "Headache" |
+              UKB_touchscreen_CP$f.6159.0.4== "Headache" |
+              UKB_touchscreen_CP$f.6159.0.5== "Headache" |
+              UKB_touchscreen_CP$f.6159.0.6=="Headache")]<-1
+
+UKB_touchscreen_CP$any_pain_facial[which(UKB_touchscreen_CP$f.6159.0.0 == "Facial pain" | 
+              UKB_touchscreen_CP$f.6159.0.1=="Facial pain" |
+              UKB_touchscreen_CP$f.6159.0.2=="Facial pain" |
+              UKB_touchscreen_CP$f.6159.0.3=="Facial pain" |
+              UKB_touchscreen_CP$f.6159.0.4=="Facial pain" |
+              UKB_touchscreen_CP$f.6159.0.5=="Facial pain" |
+              UKB_touchscreen_CP$f.6159.0.6=="Facial pain")]<-1
+
+UKB_touchscreen_CP$any_pain_neck_shoulder[which(UKB_touchscreen_CP$f.6159.0.0 == "Neck or shoulder pain" | 
+              UKB_touchscreen_CP$f.6159.0.1=="Neck or shoulder pain" |
+              UKB_touchscreen_CP$f.6159.0.2=="Neck or shoulder pain" |
+              UKB_touchscreen_CP$f.6159.0.3=="Neck or shoulder pain" |
+              UKB_touchscreen_CP$f.6159.0.4=="Neck or shoulder pain" |
+              UKB_touchscreen_CP$f.6159.0.5=="Neck or shoulder pain" |
+              UKB_touchscreen_CP$f.6159.0.6=="Neck or shoulder pain")]<-1
+
+UKB_touchscreen_CP$any_pain_back[which(UKB_touchscreen_CP$f.6159.0.0 == "Back pain" | 
+              UKB_touchscreen_CP$f.6159.0.1=="Back pain" |
+              UKB_touchscreen_CP$f.6159.0.2=="Back pain" |
+              UKB_touchscreen_CP$f.6159.0.3=="Back pain" |
+              UKB_touchscreen_CP$f.6159.0.4=="Back pain" |
+              UKB_touchscreen_CP$f.6159.0.5=="Back pain" |
+              UKB_touchscreen_CP$f.6159.0.6=="Back pain")]<-1
+
+UKB_touchscreen_CP$any_pain_stomach_abdominal[which(UKB_touchscreen_CP$f.6159.0.0 == "Stomach or abdominal pain" | 
+              UKB_touchscreen_CP$f.6159.0.1=="Stomach or abdominal pain" |
+              UKB_touchscreen_CP$f.6159.0.2=="Stomach or abdominal pain" |
+              UKB_touchscreen_CP$f.6159.0.3=="Stomach or abdominal pain" |
+              UKB_touchscreen_CP$f.6159.0.4=="Stomach or abdominal pain" |
+              UKB_touchscreen_CP$f.6159.0.5=="Stomach or abdominal pain" |
+              UKB_touchscreen_CP$f.6159.0.6=="Stomach or abdominal pain")]<-1
+
+UKB_touchscreen_CP$any_pain_hip[which(UKB_touchscreen_CP$f.6159.0.0 == "Hip pain" | 
+              UKB_touchscreen_CP$f.6159.0.1=="Hip pain" |
+              UKB_touchscreen_CP$f.6159.0.2=="Hip pain" |
+              UKB_touchscreen_CP$f.6159.0.3=="Hip pain" |
+              UKB_touchscreen_CP$f.6159.0.4=="Hip pain" |
+              UKB_touchscreen_CP$f.6159.0.5=="Hip pain" |
+              UKB_touchscreen_CP$f.6159.0.6=="Hip pain")]<-1
+
+UKB_touchscreen_CP$any_pain_knee[which(UKB_touchscreen_CP$f.6159.0.0 == "Knee pain" | 
+              UKB_touchscreen_CP$f.6159.0.1=="Knee pain" |
+              UKB_touchscreen_CP$f.6159.0.2=="Knee pain" |
+              UKB_touchscreen_CP$f.6159.0.3=="Knee pain" |
+              UKB_touchscreen_CP$f.6159.0.4=="Knee pain" |
+              UKB_touchscreen_CP$f.6159.0.5=="Knee pain" |
+              UKB_touchscreen_CP$f.6159.0.6=="Knee pain")]<-1
+
+UKB_touchscreen_CP$any_pain_widespread[which(UKB_touchscreen_CP$f.6159.0.0 == "Pain all over the body" | 
+              UKB_touchscreen_CP$f.6159.0.1=="Pain all over the body" |
+              UKB_touchscreen_CP$f.6159.0.2=="Pain all over the body" |
+              UKB_touchscreen_CP$f.6159.0.3=="Pain all over the body" |
+              UKB_touchscreen_CP$f.6159.0.4=="Pain all over the body" |
+              UKB_touchscreen_CP$f.6159.0.5=="Pain all over the body" |
+              UKB_touchscreen_CP$f.6159.0.6=="Pain all over the body")]<-1
+
+```
+
+
+## Remove participants answered "None of the above" or "Prefer not to answer" when asked "In the last month have you experienced any of the following that interfered with your usual activites? (You can select more than one answer)"
+
+```{r Remove participants who did not give pain location}
+
+UKB_touchscreen_CP$any_pain_headache[which(UKB_touchscreen_CP$f.6159.0.0=="None of the above")]<-0
+UKB_touchscreen_CP$any_pain_facial[which(UKB_touchscreen_CP$f.6159.0.0=="None of the above")]<-0
+UKB_touchscreen_CP$any_pain_neck_shoulder[which(UKB_touchscreen_CP$f.6159.0.0=="None of the above")]<-0
+UKB_touchscreen_CP$any_pain_back[which(UKB_touchscreen_CP$f.6159.0.0=="None of the above")]<-0
+UKB_touchscreen_CP$any_pain_stomach_abdominal[which(UKB_touchscreen_CP$f.6159.0.0=="None of the above")]<-0
+UKB_touchscreen_CP$any_pain_hip[which(UKB_touchscreen_CP$f.6159.0.0=="None of the above")]<-0
+UKB_touchscreen_CP$any_pain_knee[which(UKB_touchscreen_CP$f.6159.0.0=="None of the above")]<-0
+UKB_touchscreen_CP$any_pain_widespread[which(UKB_touchscreen_CP$f.6159.0.0=="None of the above")]<-0
+
+UKB_touchscreen_CP$any_pain_headache[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$any_pain_facial[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$any_pain_neck_shoulder[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$any_pain_back[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$any_pain_stomach_abdominal[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$any_pain_hip[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$any_pain_knee[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$any_pain_widespread[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+```
+
+
+Create new column to record if pain at given site/ widespread pain is chronic (3+ months)
+
+3799	Headaches for 3+ months
+4067	Facial pains for 3+ months
+3404	Neck/shoulder pain for 3+ months
+3571	Back pain for 3+ months
+3741	Stomach/abdominal pain for 3+ months
+3414	Hip pain for 3+ months
+3773	Knee pain for 3+ months
+2956	General pain for 3+ months
+
+If participant has answered "Prefer not to answer" to "In the last month have you experienced any of the following that interfered with your usual activites? (You can select more than one answer)" remove chronic pain status at each site/widespread pain 
+
+```{r Indicate if pain at given site/widespread pain is chronic}
+
+UKB_touchscreen_CP$chronic_pain_headache <- 0
+UKB_touchscreen_CP$chronic_pain_facial <- 0
+UKB_touchscreen_CP$chronic_pain_neck_shoulder <- 0
+UKB_touchscreen_CP$chronic_pain_back <- 0
+UKB_touchscreen_CP$chronic_pain_stomach_abdominal <- 0
+UKB_touchscreen_CP$chronic_pain_hip <- 0
+UKB_touchscreen_CP$chronic_pain_knee <- 0
+UKB_touchscreen_CP$chronic_pain_widespread <- 0
+
+
+UKB_touchscreen_CP$chronic_pain_headache[which(UKB_touchscreen_CP$any_pain_headache == 1 & UKB_touchscreen_CP$f.3799.0.0 =="Yes")]<-1
+UKB_touchscreen_CP$chronic_pain_facial[which(UKB_touchscreen_CP$any_pain_facial == 1 & UKB_touchscreen_CP$f.4067.0.0 =="Yes")]<-1
+UKB_touchscreen_CP$chronic_pain_neck_shoulder[which(UKB_touchscreen_CP$any_pain_neck_shoulder == 1 & UKB_touchscreen_CP$f.3404.0.0 =="Yes")]<-1
+UKB_touchscreen_CP$chronic_pain_back[which(UKB_touchscreen_CP$any_pain_back == 1 & UKB_touchscreen_CP$f.3571.0.0 =="Yes")]<-1
+UKB_touchscreen_CP$chronic_pain_stomach_abdominal[which(UKB_touchscreen_CP$any_pain_stomach_abdominal == 1 & UKB_touchscreen_CP$f.3741.0.0 =="Yes")]<-1
+UKB_touchscreen_CP$chronic_pain_hip[which(UKB_touchscreen_CP$any_pain_hip == 1 & UKB_touchscreen_CP$f.3414.0.0 =="Yes")]<-1
+UKB_touchscreen_CP$chronic_pain_knee[which(UKB_touchscreen_CP$any_pain_knee == 1 & UKB_touchscreen_CP$f.3773.0.0 =="Yes")]<-1
+UKB_touchscreen_CP$chronic_pain_widespread[which(UKB_touchscreen_CP$any_pain_widespread == 1 & UKB_touchscreen_CP$f.2956.0.0 =="Yes")]<-1
+
+UKB_touchscreen_CP$chronic_pain_headache[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$chronic_pain_facial[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$chronic_pain_neck_shoulder[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$chronic_pain_back[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$chronic_pain_stomach_abdominal[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$chronic_pain_hip[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$chronic_pain_knee[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+UKB_touchscreen_CP$chronic_pain_widespread[which(UKB_touchscreen_CP$f.6159.0.0=="Prefer not to answer")]<-NA
+
+```
+
+
+
+```{r Sum number of chronic pain sites}
+chronic_pain_sites<-UKB_touchscreen_CP$chronic_pain_headache + UKB_touchscreen_CP$chronic_pain_facial + UKB_touchscreen_CP$chronic_pain_neck_shoulder + UKB_touchscreen_CP$chronic_pain_back + UKB_touchscreen_CP$chronic_pain_stomach_abdominal + UKB_touchscreen_CP$chronic_pain_hip + UKB_touchscreen_CP$chronic_pain_knee
+
+UKB_touchscreen_CP$chronic_pain_sites <- chronic_pain_sites
+
+## Remove number of chronic pain sites to those who answered "None of the above" to "In the last month have you experienced any of the following that interfered with your usual activities? (You can select more than one answer)"
+UKB_touchscreen_CP$chronic_pain_sites[which(UKB_touchscreen_CP$f.6159.0.0=="None of the above")]<-0
+
+## If participant experiences widespread chronic pain record that the have 8 sites of chronic pain
+UKB_touchscreen_CP$chronic_pain_sites[which(UKB_touchscreen_CP$chronic_pain_widespread==1)]<-8
+
+## Add column determining whether participant experiences chronic pain or not
+UKB_touchscreen_CP$chronic_pain_status[UKB_touchscreen_CP$chronic_pain_sites > 0] <- 1
+UKB_touchscreen_CP$chronic_pain_status[UKB_touchscreen_CP$chronic_pain_sites == 0] <- 0
+
+```
+
+Save output to output directory
+
+
+```{r Sum number of chronic pain sites}
+
+write.csv(UKB_touchscreen_CP, "/Users/hannahcasey/Desktop/PhD/projects/UKB_chronic_pain_phenotype/output/UKB_chronic_pain_phenotype.csv", row.names = FALSE)
+
+```
+
+
+
+
